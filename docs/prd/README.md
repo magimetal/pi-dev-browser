@@ -83,4 +83,4 @@ Maintain in `docs/prd/README.md`:
 | PRD  | Title                                     | Status | Date       |
 | ---- | ----------------------------------------- | ------ | ---------- |
 | 0000 | Template                                  | Active | 2026-04-21 |
-| 0001 | Package pi-dev-browser for GitHub Install via Pi | Active | 2026-04-21 |
+| 0001 | Package pi-dev-browser for GitHub Install via Pi | Completed | 2026-04-21 |

@@ -1,6 +1,6 @@
 # PRD-0001: Package pi-dev-browser for GitHub Install via Pi
 
-- **Status:** Active
+- **Status:** Completed
 - **Date:** 2026-04-21
 - **Author:** Magi Metal
 - **Related:** README updates, changelog setup, package/distribution metadata, future ADRs if packaging architecture branches materially
@@ -36,11 +36,11 @@
 
 ## Acceptance Criteria
 
-- [ ] Repository contains required package files and metadata for Pi to install `pi-dev-browser` from GitHub without undocumented manual steps.
-- [ ] `README.md` explains install flow, `dev-browser` CLI prerequisites, initial setup, basic usage, and troubleshooting for common missing-dependency cases.
-- [ ] Linting can be run from documented repository command, and changelog file exists with initial entry or documented starting structure.
-- [ ] Package scope explicitly excludes registry publishing, unrelated feature work, and internal browser-tool redesign in this iteration.
-- [ ] Repository output is organized for maintainer handoff, commit, and push without missing foundational documentation artifacts.
+- [x] Repository contains required package files and metadata for Pi to install `pi-dev-browser` from GitHub without undocumented manual steps.
+- [x] `README.md` explains install flow, `dev-browser` CLI prerequisites, initial setup, basic usage, and troubleshooting for common missing-dependency cases.
+- [x] Linting can be run from documented repository command, and changelog file exists with initial entry or documented starting structure.
+- [x] Package scope explicitly excludes registry publishing, unrelated feature work, and internal browser-tool redesign in this iteration.
+- [x] Repository output is organized for maintainer handoff, commit, and push without missing foundational documentation artifacts.
 
 ## Technical Surface
 
@@ -65,3 +65,4 @@ Installation docs should optimize for first-run clarity: exact install source, p
 
 - 2026-04-21: Draft created
 - 2026-04-21: Status changed to Active after plan review passed and implementation began
+- 2026-04-21: Status changed to Completed after standalone repo migration, review, commit/push, and isolated GitHub install smoke verification passed (pushed ref `09a2791`)
