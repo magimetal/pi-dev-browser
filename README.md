@@ -1,3 +1,4 @@
+![Gizmo](docs/dev-browser.png)
 # pi-dev-browser
 
 Pi package. Adds `browser` tool backed by [`dev-browser`](https://github.com/SawyerHood/dev-browser) for page navigation, AI snapshots, interaction, screenshots, and session-scoped browser state.
