@@ -1,0 +1,19 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.4.12/schema.json",
+	"files": {
+		"includes": [
+			"extensions/**/*.ts",
+			"tests/**/*.ts",
+			"package.json",
+			"tsconfig.json",
+			"biome.json",
+			"vitest.config.ts",
+			"README.md",
+			"CHANGELOG.md",
+			"docs/commands.md"
+		]
+	},
+	"formatter": {
+		"indentStyle": "tab"
+	}
+}

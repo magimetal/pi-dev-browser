@@ -1,0 +1,7 @@
+node_modules/
+.pi-lens/
+coverage/
+.DS_Store
+*.log
+*.tgz
+*.tsbuildinfo

@@ -1,0 +1,61 @@
+{
+	"name": "pi-dev-browser",
+	"version": "0.0.1",
+	"description": "GitHub-installable Pi browser automation package backed by dev-browser CLI",
+	"type": "module",
+	"license": "MIT",
+	"author": "Magi Metal",
+	"keywords": [
+		"pi-package",
+		"pi-dev-browser",
+		"browser",
+		"automation",
+		"playwright",
+		"screenshots",
+		"dev-browser"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/magimetal/pi-dev-browser.git"
+	},
+	"homepage": "https://github.com/magimetal/pi-dev-browser",
+	"bugs": {
+		"url": "https://github.com/magimetal/pi-dev-browser/issues"
+	},
+	"engines": {
+		"node": ">=20.0.0"
+	},
+	"files": [
+		"extensions",
+		"docs/commands.md",
+		"README.md",
+		"LICENSE",
+		"CHANGELOG.md"
+	],
+	"scripts": {
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest --run",
+		"check": "npm run lint && npm run typecheck && npm test"
+	},
+	"pi": {
+		"extensions": [
+			"./extensions/dev-browser.ts"
+		]
+	},
+	"peerDependencies": {
+		"@mariozechner/pi-coding-agent": "*",
+		"@mariozechner/pi-tui": "*",
+		"@sinclair/typebox": "*"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
+		"@mariozechner/pi-coding-agent": "0.68.0",
+		"@mariozechner/pi-tui": "0.68.0",
+		"@sinclair/typebox": "0.34.49",
+		"@types/node": "25.6.0",
+		"typescript": "6.0.3",
+		"vitest": "4.1.0"
+	}
+}
