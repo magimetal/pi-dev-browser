@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added generated root `AGENTS.md` and `extensions/AGENTS.md` knowledge-base docs for repo and extension-specific coding guidance.
+
 ## [0.0.1] - 2026-04-21
 
 ### Added
