@@ -49,8 +49,8 @@
 
 ### Source package now
 
-- `package.json` declares `name: "pi-dev-browser"`, `version: "0.0.1-local"`, `license: "MIT"`, `pi.extensions: ["./extensions/dev-browser.ts"]`
-- Source `peerDependencies` already include `@mariozechner/pi-coding-agent`, `@mariozechner/pi-tui`, `@sinclair/typebox`
+- `package.json` declares `name: "pi-dev-browser"`, `version: "0.0.1"`, `license: "MIT"`, `pi.extensions: ["./extensions/dev-browser.ts"]`
+- Source `peerDependencies` already include `@mariozechner/pi-coding-agent`, `@mariozechner/pi-tui`, `typebox`
 - Source `devDependencies` already include local verification stack `@types/node`, `typescript`, `vitest`
 - Source tree contains `extensions/*.ts`, `tests/dev-browser-core.test.ts`, `docs/commands.md`, `README.md`, `vitest.config.ts`, `package-lock.json`
 
