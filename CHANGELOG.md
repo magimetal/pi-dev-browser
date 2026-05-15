@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Migrated package dependency metadata and extension TypeBox imports from `@sinclair/typebox` to `typebox` for Pi 0.69.0 compatibility.
-- Bumped local Pi development dependencies to `@mariozechner/pi-coding-agent` and `@mariozechner/pi-tui` `0.69.0`, regenerating lockfile packages against new TypeBox 1.x dependency graph.
+- Renamed Pi package imports and dependency metadata from `@mariozechner/*` to `@earendil-works/*`, bumping local Pi development dependencies to `0.74.0` and regenerating the lockfile.
 - Updated migration plan notes to reflect released `0.0.1` package version and `typebox` peer dependency naming.
 
 ## [0.0.1] - 2026-04-21
