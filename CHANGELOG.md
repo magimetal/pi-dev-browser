@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added generated root `AGENTS.md` and `extensions/AGENTS.md` knowledge-base docs for repo and extension-specific coding guidance.
 
 ### Changed
+- Updated Pi compatibility metadata and local development dependencies for Pi 0.77.0 and Node.js `>=22.19.0`.
+- Normalized dev-browser tool failure handling for Pi 0.77.0 by throwing infrastructure failures while returning recoverable browser command failures as content.
 - Migrated package dependency metadata and extension TypeBox imports from `@sinclair/typebox` to `typebox` for Pi 0.69.0 compatibility.
 - Renamed Pi package imports and dependency metadata from `@mariozechner/*` to `@earendil-works/*`, bumping local Pi development dependencies to `0.74.0` and regenerating the lockfile.
 - Updated migration plan notes to reflect released `0.0.1` package version and `typebox` peer dependency naming.

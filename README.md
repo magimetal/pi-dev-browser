@@ -31,7 +31,7 @@ pi install -l /absolute/path/to/pi-dev-browser
 
 ## Prerequisites
 
-Install Pi and Node.js first. Package also requires `dev-browser` CLI and browser runtime before first use.
+Install Pi 0.77.0 and Node.js `>=22.19.0` first. Package also requires `dev-browser` CLI and browser runtime before first use.
 
 ```bash
 npm install -g dev-browser
@@ -43,7 +43,7 @@ What this does:
 - installs `dev-browser` CLI globally
 - installs browser runtime used by managed `headless` and `headed` modes
 
-If `dev-browser` missing during interactive Pi session, extension can offer global install automatically. Non-UI runs must satisfy prerequisite manually.
+If `dev-browser` is missing during an interactive Pi session, the extension can offer global install automatically. Non-UI runs must satisfy the prerequisite manually. Missing CLI/install infrastructure failures throw tool execution errors; browser command failures from `dev-browser` are returned as recoverable content with error details so the agent can inspect and continue.
 
 ## Tool workflow
 

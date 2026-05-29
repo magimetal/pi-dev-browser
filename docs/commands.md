@@ -2,6 +2,8 @@
 
 All commands go through tool parameter `command`.
 
+Command failures reported by `dev-browser` are returned as recoverable tool content with error details. Missing CLI prerequisites, aborts, and execution infrastructure failures throw tool execution errors.
+
 ## Navigation
 
 ### `open <url>`

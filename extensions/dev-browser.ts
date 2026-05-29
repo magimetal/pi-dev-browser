@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { extname } from "node:path";
 import type {
 	AgentToolResult,
+	ExecResult,
 	ExtensionAPI,
 	ExtensionContext,
 	Theme,
@@ -55,9 +56,7 @@ type BrowserResultDetails = {
 	readError?: string;
 };
 
-type BrowserToolResult = AgentToolResult<BrowserResultDetails> & {
-	isError?: boolean;
-};
+type BrowserToolResult = AgentToolResult<BrowserResultDetails>;
 
 function getErrorMessage(error: unknown): string {
 	if (error instanceof Error) {
@@ -82,15 +81,23 @@ function throwIfAborted(signal?: AbortSignal): void {
 	}
 }
 
-function createErrorResult(
+function createRecoverableErrorResult(
 	text: string,
 	details: BrowserResultDetails,
 ): BrowserToolResult {
 	return {
 		content: [{ type: "text", text }],
 		details,
-		isError: true,
 	};
+}
+
+function throwIfKilled(result: ExecResult, signal?: AbortSignal): void {
+	if (!result.killed) {
+		return;
+	}
+
+	throwIfAborted(signal);
+	throw new Error("dev-browser command timed out or was killed");
 }
 
 function getResultText(result: BrowserToolResult): string {
@@ -101,8 +108,13 @@ function getResultText(result: BrowserToolResult): string {
 async function ensureInstalled(
 	pi: ExtensionAPI,
 	ctx: ExtensionContext,
+	signal?: AbortSignal,
 ): Promise<boolean> {
-	const check = await pi.exec("which", ["dev-browser"], { timeout: 5_000 });
+	const check = await pi.exec("which", ["dev-browser"], {
+		signal,
+		timeout: 5_000,
+	});
+	throwIfKilled(check, signal);
 	if (check.code === 0 && check.stdout.trim()) {
 		return true;
 	}
@@ -121,8 +133,10 @@ async function ensureInstalled(
 
 	ctx.ui.notify("Installing dev-browser...", "info");
 	const install = await pi.exec("npm", ["install", "-g", "dev-browser"], {
+		signal,
 		timeout: 120_000,
 	});
+	throwIfKilled(install, signal);
 	if (install.code !== 0) {
 		ctx.ui.notify(
 			`Installation failed: ${install.stderr || install.stdout}`,
@@ -133,8 +147,10 @@ async function ensureInstalled(
 
 	ctx.ui.notify("Installing Playwright Chromium for dev-browser...", "info");
 	const runtime = await pi.exec("dev-browser", ["install"], {
+		signal,
 		timeout: 120_000,
 	});
+	throwIfKilled(runtime, signal);
 	if (runtime.code !== 0) {
 		ctx.ui.notify(
 			`Browser runtime install failed: ${runtime.stderr || runtime.stdout}`,
@@ -229,7 +245,7 @@ export default function devBrowserExtension(pi: ExtensionAPI) {
 			}
 
 			const details = result.details;
-			if (result.isError || details.error) {
+			if (details.error) {
 				const errorText = details.error || getResultText(result) || "Error";
 				return new Text(theme.fg("error", errorText), 0, 0);
 			}
@@ -278,134 +294,126 @@ export default function devBrowserExtension(pi: ExtensionAPI) {
 		) {
 			const params = rawParams;
 			return executor.run(async () => {
-				try {
-					throwIfAborted(signal);
+				throwIfAborted(signal);
 
-					const installed = await ensureInstalled(pi, ctx);
-					if (!installed) {
-						return createErrorResult(
-							"dev-browser is not installed. Install manually with: npm install -g dev-browser && dev-browser install",
-							{ error: "not-installed" },
-						);
+				const installed = await ensureInstalled(pi, ctx, signal);
+				if (!installed) {
+					throw new Error(
+						"dev-browser is not installed. Install manually with: npm install -g dev-browser && dev-browser install",
+					);
+				}
+
+				throwIfAborted(signal);
+
+				const parsed = parseCommand(params.command.trim());
+				const transport = resolveTransport(params);
+				const built = buildCommand(parsed, browserName);
+				const scriptPath = writeTempFile(built.script, built.action, "js");
+
+				try {
+					const result = await pi.exec(
+						"dev-browser",
+						buildDevBrowserArgs(transport, browserName, scriptPath),
+						{
+							signal,
+							timeout: DEFAULT_TIMEOUT_MS,
+						},
+					);
+
+					throwIfKilled(result, signal);
+
+					if (result.code !== 0) {
+						const errorOutput = (result.stderr || result.stdout).trim();
+						const message =
+							errorOutput || `Command failed with exit code ${result.code}`;
+						return createRecoverableErrorResult(message, {
+							action: built.action,
+							command: params.command,
+							error: message,
+							exitCode: result.code,
+							mode: transport.mode,
+						});
 					}
 
-					throwIfAborted(signal);
+					cleanupTransport = transport;
+					recordSuccessfulAction(runtimeState, built.action);
 
-					const parsed = parseCommand(params.command.trim());
-					const transport = resolveTransport(params);
-					const built = buildCommand(parsed, browserName);
-					const scriptPath = writeTempFile(built.script, built.action, "js");
+					let output = result.stdout.trim();
+					if (built.action === "snapshot") {
+						output = transformSnapshotOutput(output);
+					}
 
-					try {
-						const result = await pi.exec(
-							"dev-browser",
-							buildDevBrowserArgs(transport, browserName, scriptPath),
-							{
-								signal,
-								timeout: DEFAULT_TIMEOUT_MS,
-							},
-						);
-
-						if (result.code !== 0) {
-							const errorOutput = (result.stderr || result.stdout).trim();
-							return createErrorResult(
-								errorOutput || `Command failed with exit code ${result.code}`,
-								{
-									action: built.action,
-									command: params.command,
-									error: errorOutput,
-									exitCode: result.code,
-									mode: transport.mode,
-								},
-							);
-						}
-
-						cleanupTransport = transport;
-						recordSuccessfulAction(runtimeState, built.action);
-
-						let output = result.stdout.trim();
-						if (built.action === "snapshot") {
-							output = transformSnapshotOutput(output);
-						}
-
-						if (built.action === "screenshot") {
-							const screenshotPath = extractScreenshotPath(output);
-							if (screenshotPath) {
-								try {
-									const imageData = readFileSync(screenshotPath);
-									const base64 = imageData.toString("base64");
-									const ext = extname(screenshotPath).toLowerCase();
-									const mimeType =
-										ext === ".jpg" || ext === ".jpeg"
-											? "image/jpeg"
-											: ext === ".webp"
-												? "image/webp"
-												: "image/png";
-									return {
-										content: [
-											{
-												type: "text",
-												text: `Screenshot saved: ${screenshotPath}`,
-											},
-											{ type: "image", data: base64, mimeType },
-										],
-										details: {
-											action: built.action,
-											command: params.command,
-											mode: transport.mode,
-											screenshotPath,
+					if (built.action === "screenshot") {
+						const screenshotPath = extractScreenshotPath(output);
+						if (screenshotPath) {
+							try {
+								const imageData = readFileSync(screenshotPath);
+								const base64 = imageData.toString("base64");
+								const ext = extname(screenshotPath).toLowerCase();
+								const mimeType =
+									ext === ".jpg" || ext === ".jpeg"
+										? "image/jpeg"
+										: ext === ".webp"
+											? "image/webp"
+											: "image/png";
+								return {
+									content: [
+										{
+											type: "text",
+											text: `Screenshot saved: ${screenshotPath}`,
 										},
-									};
-								} catch (error: unknown) {
-									const readError = getErrorMessage(error);
-									return {
-										content: [
-											{
-												type: "text",
-												text: `Screenshot saved to ${screenshotPath} but could not read file: ${readError}`,
-											},
-										],
-										details: {
-											action: built.action,
-											command: params.command,
-											mode: transport.mode,
-											screenshotPath,
-											readError,
+										{ type: "image", data: base64, mimeType },
+									],
+									details: {
+										action: built.action,
+										command: params.command,
+										mode: transport.mode,
+										screenshotPath,
+									},
+								};
+							} catch (error: unknown) {
+								const readError = getErrorMessage(error);
+								return {
+									content: [
+										{
+											type: "text",
+											text: `Screenshot saved to ${screenshotPath} but could not read file: ${readError}`,
 										},
-									};
-								}
+									],
+									details: {
+										action: built.action,
+										command: params.command,
+										mode: transport.mode,
+										screenshotPath,
+										readError,
+									},
+								};
 							}
 						}
-
-						const truncation = truncateHead(output, {
-							maxLines: DEFAULT_MAX_LINES,
-							maxBytes: DEFAULT_MAX_BYTES,
-						});
-
-						let resultText = truncation.content;
-						if (truncation.truncated) {
-							const tempFile = writeTempFile(output, built.action);
-							resultText += `\n\n[Output truncated: ${truncation.outputLines} of ${truncation.totalLines} lines (${formatSize(truncation.outputBytes)} of ${formatSize(truncation.totalBytes)}). Full output saved to: ${tempFile}]`;
-						}
-
-						return {
-							content: [{ type: "text", text: resultText || "(no output)" }],
-							details: {
-								action: built.action,
-								command: params.command,
-								mode: transport.mode,
-								truncated: truncation.truncated,
-							},
-						};
-					} finally {
-						removeTempFile(scriptPath);
 					}
-				} catch (error: unknown) {
-					const message = getErrorMessage(error);
-					return createErrorResult(message, {
-						error: message,
-						command: params.command,
+
+					const truncation = truncateHead(output, {
+						maxLines: DEFAULT_MAX_LINES,
+						maxBytes: DEFAULT_MAX_BYTES,
 					});
+
+					let resultText = truncation.content;
+					if (truncation.truncated) {
+						const tempFile = writeTempFile(output, built.action);
+						resultText += `\n\n[Output truncated: ${truncation.outputLines} of ${truncation.totalLines} lines (${formatSize(truncation.outputBytes)} of ${formatSize(truncation.totalBytes)}). Full output saved to: ${tempFile}]`;
+					}
+
+					return {
+						content: [{ type: "text", text: resultText || "(no output)" }],
+						details: {
+							action: built.action,
+							command: params.command,
+							mode: transport.mode,
+							truncated: truncation.truncated,
+						},
+					};
+				} finally {
+					removeTempFile(scriptPath);
 				}
 			});
 		},
