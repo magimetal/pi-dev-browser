@@ -21,6 +21,10 @@ Project-local install:
 pi install -l git:github.com/magimetal/pi-dev-browser
 ```
 
+Pi 0.79.0+ requires project trust for project-local installs. In non-interactive runs, pass `--approve`.
+
+Pi 0.79.7+ changed `pi update` to update Pi only. Run `pi update --all` to update installed extensions.
+
 From local checkout:
 
 ```bash
